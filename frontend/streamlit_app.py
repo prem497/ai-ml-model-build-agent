@@ -8,6 +8,13 @@ import base64
 import time
 from io import BytesIO
 from typing import Any, Dict, List, Optional
+import os
+import sys
+
+# Add root directory to sys.path so 'app' module can be found
+root_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
+if root_dir not in sys.path:
+    sys.path.insert(0, root_dir)
 
 import httpx
 import streamlit as st
