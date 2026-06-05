@@ -24,15 +24,30 @@ st.set_page_config(
 import subprocess
 import socket
 import sys
+import os
 
-def is_backend_running(port=8000):
-    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
-        return s.connect_ex(('localhost', port)) == 0
+@st.cache_resource
+def start_backend_once():
+    def is_backend_running(port=8000):
+        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+            return s.connect_ex(('localhost', port)) == 0
 
-if not is_backend_running(8000):
-    print("Starting FastAPI backend automatically...")
-    subprocess.Popen([sys.executable, "-m", "uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"])
-    time.sleep(3)  # Wait for uvicorn to boot
+    if not is_backend_running(8000):
+        print("Starting FastAPI backend automatically...")
+        try:
+            # Run detached so it doesn't block Streamlit
+            env = os.environ.copy()
+            subprocess.Popen(
+                [sys.executable, "-m", "uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"],
+                env=env,
+                stdout=subprocess.DEVNULL,
+                stderr=subprocess.DEVNULL
+            )
+            time.sleep(2)  # brief wait for uvicorn to boot
+        except Exception as e:
+            print(f"Failed to start backend: {e}")
+
+start_backend_once()
 
 BACKEND_URL = "http://localhost:8000"
 
