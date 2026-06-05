@@ -314,16 +314,43 @@ def run_pipeline(user_input: str, dataset_url: Optional[str] = None) -> Optional
     payload = {"user_input": user_input}
     if dataset_url:
         payload["dataset_url"] = dataset_url
+        
     try:
-        r = httpx.post(url, json=payload, timeout=180)
-        if r.status_code == 200:
-            return r.json()
-        st.error(f"❌ API error {r.status_code}: {r.text[:300]}")
-    except httpx.ConnectError:
-        st.error("❌ Cannot reach backend. Start FastAPI first:\n```\nuvicorn app.main:app --reload\n```")
+        # Import the backend logic directly to bypass unstable subprocess networking on Cloud
+        import asyncio
+        import uuid
+        import time
+        from datetime import datetime
+        from app.agent.llm_agent import run_pipeline_agent
+        from app.storage.db import save_pipeline_run
+
+        run_id = str(uuid.uuid4())
+        start_time = time.time()
+        
+        # Streamlit is synchronous, so we run the async agent
+        result = asyncio.run(run_pipeline_agent(
+            user_input=user_input,
+            dataset_url=dataset_url,
+            run_id=run_id
+        ))
+        
+        execution_time = time.time() - start_time
+        full_result = {
+            **result,
+            "run_id":         run_id,
+            "user_input":     user_input,
+            "execution_time": round(execution_time, 3),
+            "created_at":     datetime.utcnow(),
+            "status":         "completed",
+        }
+        save_pipeline_run(full_result)
+        return full_result
+        
     except Exception as e:
-        st.error(f"❌ {e}")
-    return None
+        import traceback
+        st.error("❌ Pipeline failed. Backend execution error:")
+        st.code(traceback.format_exc(), language="text")
+        return None
 
 
 # ─── Sidebar ──────────────────────────────────────────────────────────────────
