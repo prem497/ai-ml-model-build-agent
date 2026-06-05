@@ -20,6 +20,20 @@ st.set_page_config(
     initial_sidebar_state="expanded",
 )
 
+# ─── Auto-Start FastAPI Backend (For Streamlit Cloud) ───────────────────────
+import subprocess
+import socket
+import sys
+
+def is_backend_running(port=8000):
+    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+        return s.connect_ex(('localhost', port)) == 0
+
+if not is_backend_running(8000):
+    print("Starting FastAPI backend automatically...")
+    subprocess.Popen([sys.executable, "-m", "uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"])
+    time.sleep(3)  # Wait for uvicorn to boot
+
 BACKEND_URL = "http://localhost:8000"
 
 # ─── Global CSS ───────────────────────────────────────────────────────────────
