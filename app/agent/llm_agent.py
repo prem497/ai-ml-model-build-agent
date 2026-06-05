@@ -66,7 +66,7 @@ def _build_llm():
 
 # ─── Intent via LLM ───────────────────────────────────────────────────────────
 
-async def _call_llm(user_input: str) -> str:
+def _call_llm(user_input: str) -> str:
     """
     Call the LLM with the system prompt and return the raw text response.
     Returns an empty string if LLM is unavailable.
@@ -85,7 +85,7 @@ async def _call_llm(user_input: str) -> str:
     messages.append(HumanMessage(content=user_input))
 
     try:
-        response = await llm.ainvoke(messages)
+        response = llm.invoke(messages)
         return response.content if hasattr(response, "content") else str(response)
     except Exception as e:
         print(f"[Agent] LLM call failed: {e}")
@@ -160,7 +160,7 @@ def _build_fallback_plan(user_input: str, dataset_url: Optional[str] = None) -> 
 
 # ─── Main Agent Entry Point ───────────────────────────────────────────────────
 
-async def run_pipeline_agent(
+def run_pipeline_agent(
     user_input: str,
     dataset_url: Optional[str],
     run_id: str,
@@ -176,7 +176,7 @@ async def run_pipeline_agent(
     """
 
     # ── Stage 1 & 2: Intent + Planning ────────────────────────────────────────
-    llm_response = await _call_llm(user_input)
+    llm_response = _call_llm(user_input)
 
     if llm_response:
         plan = parse_llm_response(llm_response)

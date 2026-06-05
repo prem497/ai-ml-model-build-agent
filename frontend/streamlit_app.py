@@ -324,7 +324,6 @@ def run_pipeline(user_input: str, dataset_url: Optional[str] = None) -> Optional
         
     try:
         # Import the backend logic directly to bypass unstable subprocess networking on Cloud
-        import asyncio
         import uuid
         import time
         from datetime import datetime
@@ -334,12 +333,12 @@ def run_pipeline(user_input: str, dataset_url: Optional[str] = None) -> Optional
         run_id = str(uuid.uuid4())
         start_time = time.time()
         
-        # Streamlit is synchronous, so we run the async agent
-        result = asyncio.run(run_pipeline_agent(
+        # Execute the agent synchronously
+        result = run_pipeline_agent(
             user_input=user_input,
             dataset_url=dataset_url,
             run_id=run_id
-        ))
+        )
         
         execution_time = time.time() - start_time
         full_result = {

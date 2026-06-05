@@ -38,7 +38,7 @@ async def run_pipeline(request: PipelineRequest):
     start_time = time.time()
 
     try:
-        result = await run_pipeline_agent(
+        result = run_pipeline_agent(
             user_input=request.user_input,
             dataset_url=request.dataset_url,
             run_id=run_id,
