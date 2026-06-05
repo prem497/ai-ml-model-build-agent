@@ -12,14 +12,6 @@ CHROMA_PERSIST_DIR = os.getenv("CHROMA_PERSIST_DIR", "./chroma_db")
 
 def _get_client():
     try:
-        import sys
-        # Streamlit Cloud uses an older sqlite3. Override with pysqlite3-binary
-        try:
-            __import__('pysqlite3')
-            sys.modules['sqlite3'] = sys.modules.pop('pysqlite3')
-        except ImportError:
-            pass
-
         import chromadb
         from chromadb.config import Settings
         client = chromadb.PersistentClient(path=CHROMA_PERSIST_DIR)
