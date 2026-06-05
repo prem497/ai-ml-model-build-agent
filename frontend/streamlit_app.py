@@ -25,6 +25,7 @@ import subprocess
 import socket
 import sys
 import os
+import time
 
 @st.cache_resource
 def start_backend_once():
@@ -35,15 +36,24 @@ def start_backend_once():
     if not is_backend_running(8000):
         print("Starting FastAPI backend automatically...")
         try:
-            # Run detached so it doesn't block Streamlit
             env = os.environ.copy()
+            # Explicitly inject Streamlit secrets into the backend environment
+            try:
+                for k, v in st.secrets.items():
+                    if isinstance(v, str):
+                        env[k] = v
+            except Exception:
+                pass
+            
+            # Run detached and log to backend.log so we can debug
+            log_file = open("backend.log", "w")
             subprocess.Popen(
                 [sys.executable, "-m", "uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"],
                 env=env,
-                stdout=subprocess.DEVNULL,
-                stderr=subprocess.DEVNULL
+                stdout=log_file,
+                stderr=subprocess.STDOUT
             )
-            time.sleep(2)  # brief wait for uvicorn to boot
+            time.sleep(5)  # give it more time to boot on slow cloud VMs
         except Exception as e:
             print(f"Failed to start backend: {e}")
 
@@ -322,7 +332,16 @@ with st.sidebar:
     st.caption("Convert natural language into ML pipelines")
     st.divider()
 
-    # Backend settings
+    # Debug Log Viewer
+    with st.expander("🛠️ Debug Backend Logs"):
+        if os.path.exists("backend.log"):
+            with open("backend.log", "r") as f:
+                logs = f.read()
+            st.code(logs[-2000:], language="text")
+        else:
+            st.write("No logs yet.")
+
+    # Connection Status
     with st.expander("⚙️ Settings", expanded=False):
         new_url = st.text_input("Backend URL", value=st.session_state.backend_url)
         if new_url != st.session_state.backend_url:
